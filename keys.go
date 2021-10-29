@@ -49,9 +49,32 @@ func (k *Keys) Unset(key string) {
 	k.s = append(first, second...)
 }
 
-// Set will place a key
+// Has will return if a key exists
 func (k *Keys) Has(key string) (has bool) {
 	_, has = k.getIndex(key)
+	return
+}
+
+// Len will return the keys length
+func (k *Keys) Len() (n int) {
+	return len(k.s)
+}
+
+// Len will return the keys length
+func (k *Keys) Slice() (s []string) {
+	s = make([]string, len(k.s))
+	copy(s, k.s)
+	return
+}
+
+// Len will return the keys length
+func (k *Keys) ForEach(fn func(string) error) (err error) {
+	for _, k := range k.s {
+		if err = fn(k); err != nil {
+			return
+		}
+	}
+
 	return
 }
 
