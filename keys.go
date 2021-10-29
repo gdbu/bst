@@ -68,9 +68,9 @@ func (k *Keys) Slice() (s []string) {
 }
 
 // Len will return the keys length
-func (k *Keys) ForEach(fn func(string) error) (err error) {
+func (k *Keys) ForEach(fn func(string) (end bool)) (ended bool) {
 	for _, k := range k.s {
-		if err = fn(k); err != nil {
+		if ended = fn(k); ended {
 			return
 		}
 	}
