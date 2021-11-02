@@ -12,6 +12,8 @@ var (
 		"q", "r", "s", "t", "u", "v", "w", "x",
 		"y", "z",
 	}
+
+	indexSink int
 )
 
 func TestKeys(t *testing.T) {
@@ -116,4 +118,20 @@ func TestKeys_getIndex(t *testing.T) {
 			t.Fatalf("invalid match, expected %v and received %v (test case index %d)", tc.wantMatch, match, i)
 		}
 	}
+}
+
+func BenchmarkKeys_getIndex(b *testing.B) {
+	k := makeKeys(testLetters)
+	b.ResetTimer()
+	var match bool
+	for i := 0; i < b.N; i++ {
+		for _, key := range testLetters {
+			indexSink, match = k.getIndex(key)
+			if !match {
+				b.Fatalf("received non-match for <%s>", key)
+			}
+		}
+	}
+
+	b.ReportAllocs()
 }
