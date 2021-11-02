@@ -117,3 +117,7 @@ func (k *Keys) getIndex(key string) (index int, match bool) {
 		}
 	}
 }
+
+func (k *Keys) getKey(index int) string {
+	return k.s[index]
+}
