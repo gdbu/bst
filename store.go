@@ -41,6 +41,17 @@ func (k *Store) Set(key string, value interface{}) {
 	k.s = append(first, second...)
 }
 
+// Get will retrieve a value for a given key
+func (k *Store) Get(key string) (value interface{}, has bool) {
+	var index int
+	if index, has = getIndex(k, key); !has {
+		return
+	}
+
+	value = k.s[index].Value
+	return
+}
+
 // UsSet will remove a key
 func (k *Store) Unset(key string) {
 	index, match := getIndex(k, key)
