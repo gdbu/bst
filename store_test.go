@@ -4,7 +4,7 @@ import "testing"
 
 func TestStore_Set(t *testing.T) {
 	type fields struct {
-		s []KV
+		kvs []KV
 	}
 
 	type args struct {
@@ -37,7 +37,7 @@ func TestStore_Set(t *testing.T) {
 		{
 			name: "overwrite",
 			fields: fields{
-				s: []KV{
+				kvs: []KV{
 					{
 						Key:   "0000",
 						Value: "1",
@@ -58,7 +58,7 @@ func TestStore_Set(t *testing.T) {
 		{
 			name: "prepend",
 			fields: fields{
-				s: []KV{
+				kvs: []KV{
 					{
 						Key:   "0001",
 						Value: "1",
@@ -83,7 +83,7 @@ func TestStore_Set(t *testing.T) {
 		{
 			name: "append",
 			fields: fields{
-				s: []KV{
+				kvs: []KV{
 					{
 						Key:   "0000",
 						Value: "0",
@@ -110,7 +110,7 @@ func TestStore_Set(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			k := &Store{
-				s: tt.fields.s,
+				kvs: tt.fields.kvs,
 			}
 			k.Set(tt.args.key, tt.args.value)
 		})

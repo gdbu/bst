@@ -10,16 +10,16 @@ func NewStore(kvs ...KV) *Store {
 	return &s
 }
 
-func makeStore(kvs []KV) (k Store) {
+func makeStore(kvs []KV) (s Store) {
 	sz := len(kvs)
 	if sz == 0 {
 		sz = 8
 	}
 
-	k.s = make([]KV, len(kvs), sz)
-	copy(k.s, kvs)
-	sort.Slice(k.s, func(i, j int) (less bool) {
-		return k.s[i].Key < k.s[j].Key
+	s.kvs = make([]KV, len(kvs), sz)
+	copy(s.kvs, kvs)
+	sort.Slice(s.kvs, func(i, j int) (less bool) {
+		return s.kvs[i].Key < s.kvs[j].Key
 	})
 
 	return
@@ -27,67 +27,67 @@ func makeStore(kvs []KV) (k Store) {
 
 // Store is a Store Stringset
 type Store struct {
-	s []KV
+	kvs []KV
 }
 
 // Set will place a key
-func (k *Store) Set(key string, value interface{}) {
-	index, match := k.getIndex(key)
+func (s *Store) Set(key string, value interface{}) {
+	index, match := s.getIndex(key)
 	if match {
-		k.s[index].Value = value
+		s.kvs[index].Value = value
 		return
 	}
 
 	pair := makeKV(key, value)
-	first := k.s[:index]
-	second := append([]KV{pair}, k.s[index:]...)
-	k.s = append(first, second...)
+	first := s.kvs[:index]
+	second := append([]KV{pair}, s.kvs[index:]...)
+	s.kvs = append(first, second...)
 }
 
 // Get will retrieve a value for a given key
-func (k *Store) Get(key string) (value interface{}, has bool) {
+func (s *Store) Get(key string) (value interface{}, has bool) {
 	var index int
-	if index, has = k.getIndex(key); !has {
+	if index, has = s.getIndex(key); !has {
 		return
 	}
 
-	value = k.s[index].Value
+	value = s.kvs[index].Value
 	return
 }
 
 // UsSet will remove a key
-func (k *Store) Unset(key string) {
-	index, match := k.getIndex(key)
+func (s *Store) Unset(key string) {
+	index, match := s.getIndex(key)
 	if !match {
 		return
 	}
 
-	first := k.s[:index]
-	second := k.s[index+1:]
-	k.s = append(first, second...)
+	first := s.kvs[:index]
+	second := s.kvs[index+1:]
+	s.kvs = append(first, second...)
 }
 
 // Has will return if a key exists
-func (k *Store) Has(key string) (has bool) {
-	_, has = k.getIndex(key)
+func (s *Store) Has(key string) (has bool) {
+	_, has = s.getIndex(key)
 	return
 }
 
 // Len will return the keys length
-func (k *Store) Len() (n int) {
-	return len(k.s)
+func (s *Store) Len() (n int) {
+	return len(s.kvs)
 }
 
 // Len will return the keys length
-func (k *Store) Slice() (s []KV) {
-	s = make([]KV, len(k.s))
-	copy(s, k.s)
+func (s *Store) Slice() (kvs []KV) {
+	kvs = make([]KV, len(s.kvs))
+	copy(kvs, s.kvs)
 	return
 }
 
 // Len will return the keys length
-func (k *Store) ForEach(fn func(string, interface{}) (end bool)) (ended bool) {
-	for _, kv := range k.s {
+func (s *Store) ForEach(fn func(string, interface{}) (end bool)) (ended bool) {
+	for _, kv := range s.kvs {
 		if ended = fn(kv.Key, kv.Value); ended {
 			return
 		}
@@ -96,12 +96,12 @@ func (k *Store) ForEach(fn func(string, interface{}) (end bool)) (ended bool) {
 	return
 }
 
-func (k *Store) getKey(index int) string {
-	return k.s[index].Key
+func (s *Store) getKey(index int) string {
+	return s.kvs[index].Key
 }
 
-func (k *Store) getIndex(key string) (index int, match bool) {
-	sz := k.Len()
+func (s *Store) getIndex(key string) (index int, match bool) {
+	sz := s.Len()
 	if sz == 0 {
 		return
 	}
@@ -110,13 +110,13 @@ func (k *Store) getIndex(key string) (index int, match bool) {
 	end := sz - 1
 	index = sz / 2
 
-	if k.getKey(end) < key {
+	if s.getKey(end) < key {
 		index = end + 1
 		return
 	}
 
 	for {
-		ref := k.getKey(index)
+		ref := s.getKey(index)
 		switch {
 		case key == ref:
 			match = true
