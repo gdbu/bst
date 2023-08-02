@@ -1,6 +1,8 @@
 package bst
 
-import "sort"
+import (
+	"sort"
+)
 
 // NewStore a new Store instance
 func NewStore(kvs ...KV) *Store {
@@ -30,7 +32,7 @@ type Store struct {
 
 // Set will place a key
 func (k *Store) Set(key string, value interface{}) {
-	index, match := getIndex(k, key)
+	index, match := k.getIndex(key)
 	if match {
 		k.s[index].Value = value
 		return
@@ -45,7 +47,7 @@ func (k *Store) Set(key string, value interface{}) {
 // Get will retrieve a value for a given key
 func (k *Store) Get(key string) (value interface{}, has bool) {
 	var index int
-	if index, has = getIndex(k, key); !has {
+	if index, has = k.getIndex(key); !has {
 		return
 	}
 
@@ -55,7 +57,7 @@ func (k *Store) Get(key string) (value interface{}, has bool) {
 
 // UsSet will remove a key
 func (k *Store) Unset(key string) {
-	index, match := getIndex(k, key)
+	index, match := k.getIndex(key)
 	if !match {
 		return
 	}
@@ -67,7 +69,7 @@ func (k *Store) Unset(key string) {
 
 // Has will return if a key exists
 func (k *Store) Has(key string) (has bool) {
-	_, has = getIndex(k, key)
+	_, has = k.getIndex(key)
 	return
 }
 
@@ -96,4 +98,38 @@ func (k *Store) ForEach(fn func(string, interface{}) (end bool)) (ended bool) {
 
 func (k *Store) getKey(index int) string {
 	return k.s[index].Key
+}
+
+func (k *Store) getIndex(key string) (index int, match bool) {
+	sz := k.Len()
+	if sz == 0 {
+		return
+	}
+
+	start := 0
+	end := sz - 1
+	index = sz / 2
+
+	if k.getKey(end) < key {
+		index = end + 1
+		return
+	}
+
+	for {
+		ref := k.getKey(index)
+		switch {
+		case key == ref:
+			match = true
+			return
+		case start == end:
+			index++
+			return
+		case key < ref:
+			end = index - 1
+		case key > ref:
+			start = index + 1
+		}
+
+		index = (start + end) / 2
+	}
 }
