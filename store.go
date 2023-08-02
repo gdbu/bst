@@ -32,6 +32,7 @@ type Store struct {
 func (k *Store) Set(key string, value interface{}) {
 	index, match := getIndex(k, key)
 	if match {
+		k.s[index].Value = value
 		return
 	}
 
