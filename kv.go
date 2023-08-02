@@ -1,13 +1,13 @@
 package bst
 
-func makeKV(key string, value interface{}) (kv KV) {
+func makeKV[T any](key string, value T) (kv KV[T]) {
 	kv.Key = key
 	kv.Value = value
 	return
 }
 
 // KV represents a Key/Value pair
-type KV struct {
+type KV[T any] struct {
 	Key   string
-	Value interface{}
+	Value T
 }

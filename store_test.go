@@ -4,19 +4,19 @@ import "testing"
 
 func TestStore_Set(t *testing.T) {
 	type fields struct {
-		kvs []KV
+		kvs []KV[string]
 	}
 
 	type args struct {
 		key   string
-		value interface{}
+		value string
 	}
 
 	type testcase struct {
 		name   string
 		fields fields
 		args   args
-		want   []KV
+		want   []KV[string]
 	}
 
 	tests := []testcase{
@@ -27,7 +27,7 @@ func TestStore_Set(t *testing.T) {
 				key:   "0000",
 				value: "1",
 			},
-			want: []KV{
+			want: []KV[string]{
 				{
 					Key:   "0000",
 					Value: "1",
@@ -37,7 +37,7 @@ func TestStore_Set(t *testing.T) {
 		{
 			name: "overwrite",
 			fields: fields{
-				kvs: []KV{
+				kvs: []KV[string]{
 					{
 						Key:   "0000",
 						Value: "1",
@@ -48,7 +48,7 @@ func TestStore_Set(t *testing.T) {
 				key:   "0000",
 				value: "2",
 			},
-			want: []KV{
+			want: []KV[string]{
 				{
 					Key:   "0000",
 					Value: "2",
@@ -58,7 +58,7 @@ func TestStore_Set(t *testing.T) {
 		{
 			name: "prepend",
 			fields: fields{
-				kvs: []KV{
+				kvs: []KV[string]{
 					{
 						Key:   "0001",
 						Value: "1",
@@ -69,7 +69,7 @@ func TestStore_Set(t *testing.T) {
 				key:   "0000",
 				value: "0",
 			},
-			want: []KV{
+			want: []KV[string]{
 				{
 					Key:   "0000",
 					Value: "0",
@@ -83,7 +83,7 @@ func TestStore_Set(t *testing.T) {
 		{
 			name: "append",
 			fields: fields{
-				kvs: []KV{
+				kvs: []KV[string]{
 					{
 						Key:   "0000",
 						Value: "0",
@@ -94,7 +94,7 @@ func TestStore_Set(t *testing.T) {
 				key:   "0001",
 				value: "1",
 			},
-			want: []KV{
+			want: []KV[string]{
 				{
 					Key:   "0000",
 					Value: "0",
@@ -109,7 +109,7 @@ func TestStore_Set(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			k := &Store{
+			k := &Store[string]{
 				kvs: tt.fields.kvs,
 			}
 			k.Set(tt.args.key, tt.args.value)
