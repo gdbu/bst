@@ -23,7 +23,7 @@ func (k *Keys) Set(key string) {
 
 // Len will return the keys length
 func (k *Keys) ForEach(fn func(string) (end bool)) (ended bool) {
-	return k.Store.ForEach(func(key string, _ interface{}) (end bool) {
+	return k.Store.ForEach(func(key string, _ struct{}) (end bool) {
 		return fn(key)
 	})
 }
