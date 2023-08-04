@@ -2,6 +2,10 @@ package bst
 
 import "testing"
 
+var (
+	stringSink string
+)
+
 func TestStore_Set(t *testing.T) {
 	type fields struct {
 		kvs []KV[string, string]
@@ -109,19 +113,73 @@ func TestStore_Set(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			k := NewStore(tt.fields.kvs...)
+			k := New(tt.fields.kvs...)
 			k.Set(tt.args.key, tt.args.value)
 		})
 	}
 }
 
 func Benchmark_Store_getIndex(b *testing.B) {
-	k := NewKeys(testLetters...)
+	var kvs []KV[string, string]
+	for _, key := range testLetters {
+		var kv KV[string, string]
+		kv.Key = key
+		kv.Value = key
+		kvs = append(kvs, kv)
+	}
+
+	k := New(kvs...)
 	b.ResetTimer()
 	var match bool
 	for i := 0; i < b.N; i++ {
 		for _, key := range testLetters {
 			indexSink, match = k.getIndex(key)
+			if !match {
+				b.Fatalf("received non-match for <%s>", key)
+			}
+		}
+	}
+
+	b.ReportAllocs()
+}
+
+func Benchmark_Store_Get(b *testing.B) {
+	var kvs []KV[string, string]
+	for _, key := range testLetters {
+		var kv KV[string, string]
+		kv.Key = key
+		kv.Value = key
+		kvs = append(kvs, kv)
+	}
+
+	k := New(kvs...)
+	b.ResetTimer()
+
+	var match bool
+	for i := 0; i < b.N; i++ {
+		for _, key := range testLetters {
+			stringSink, match = k.Get(key)
+			if !match {
+				b.Fatalf("received non-match for <%s>", key)
+			}
+		}
+	}
+
+	b.ReportAllocs()
+}
+
+func Benchmark_Map_Get(b *testing.B) {
+	m := make(map[string]string)
+	for _, key := range testLetters {
+		m[key] = key
+	}
+
+	b.ResetTimer()
+
+	var match bool
+	for i := 0; i < b.N; i++ {
+		for _, key := range testLetters {
+			stringSink, match = m[key]
 			if !match {
 				b.Fatalf("received non-match for <%s>", key)
 			}
