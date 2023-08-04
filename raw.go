@@ -46,6 +46,17 @@ func (s *Raw[K, V]) Set(key K, value V) {
 	s.kvs = append(first, second...)
 }
 
+// Set will place a key
+func (s *Raw[K, V]) Update(key K, fn func(V) V) (success bool) {
+	index, match := s.getIndex(key)
+	if !match {
+		return false
+	}
+
+	s.kvs[index].Value = fn(s.kvs[index].Value)
+	return true
+}
+
 // Get will retrieve a value for a given key
 func (s *Raw[K, V]) Get(key K) (value V, has bool) {
 	var index int
