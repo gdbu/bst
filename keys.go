@@ -3,9 +3,9 @@ package bst
 // NewKeys a new Keys instance
 func NewKeys(keys ...string) *Keys {
 	var k Keys
-	k.Store = makeStore[struct{}](nil)
+	k.s = makeStore[struct{}](nil)
 	for _, key := range keys {
-		k.Store.Set(key, struct{}{})
+		k.s.Set(key, struct{}{})
 	}
 
 	return &k
@@ -13,17 +13,27 @@ func NewKeys(keys ...string) *Keys {
 
 // Keys is a Keys Stringset
 type Keys struct {
-	Store[struct{}]
+	s Store[struct{}]
 }
 
 // Set will place a key
 func (k *Keys) Set(key string) {
-	k.Store.Set(key, struct{}{})
+	k.s.Set(key, struct{}{})
+}
+
+// Unset removes a key
+func (k *Keys) Unset(key string) {
+	k.s.Unset(key)
+}
+
+// Has determines if a key exists
+func (k *Keys) Has(key string) bool {
+	return k.s.Has(key)
 }
 
 // Len will return the keys length
 func (k *Keys) ForEach(fn func(string) (end bool)) (ended bool) {
-	return k.Store.ForEach(func(key string, _ struct{}) (end bool) {
+	return k.s.ForEach(func(key string, _ struct{}) (end bool) {
 		return fn(key)
 	})
 }
