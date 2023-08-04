@@ -1,7 +1,7 @@
 package bst
 
-// NewStore a new Store instance
-func NewStore[V any](kvs ...KV[string, V]) *Store[V] {
+// New a new Store instance
+func New[V any](kvs ...KV[string, V]) *Store[V] {
 	s := makeStore[V](kvs)
 	return &s
 }
@@ -14,6 +14,11 @@ func makeStore[V any](kvs []KV[string, V]) (s Store[V]) {
 
 type Store[V any] struct {
 	Raw[string, V]
+}
+
+// Len will return the keys length
+func (s *Store[V]) ForEach(fn func(string, V) (end bool)) (ended bool) {
+	return s.Raw.ForEach(fn)
 }
 
 func compareString(a, b string) int {
