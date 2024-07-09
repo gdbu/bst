@@ -29,6 +29,7 @@ func TestKeys(t *testing.T) {
 			tc.strs = strs
 			tc.key = str
 			tc.wantMatch = true
+			tcs = append(tcs, tc)
 		}
 
 		return
@@ -53,13 +54,14 @@ func TestKeys(t *testing.T) {
 
 		if !has {
 			k.Set("foo")
-		}
 
-		if !k.Has("foo") {
-			t.Fatal("does not have foo when expected")
-		}
+			if !k.Has("foo") {
+				t.Fatal("does not have foo when expected")
+			}
 
-		k.Unset("foo")
+			k.Unset("foo")
+
+		}
 
 		if k.Has("foo") {
 			t.Fatal("has foo when not expected")
