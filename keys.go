@@ -31,6 +31,11 @@ func (k *Keys) Has(key string) bool {
 	return k.s.Has(key)
 }
 
+// Len returns the length of the underlying keys
+func (k *Keys) Len() (n int) {
+	return k.s.Len()
+}
+
 // Len will return the keys length
 func (k *Keys) ForEach(fn func(string) (end bool)) (ended bool) {
 	return k.s.ForEach(func(key string, _ struct{}) (end bool) {
