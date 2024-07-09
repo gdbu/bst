@@ -37,3 +37,14 @@ func (k *Keys) ForEach(fn func(string) (end bool)) (ended bool) {
 		return fn(key)
 	})
 }
+
+// Has determines if a key exists
+func (k *Keys) Slice() (out []string) {
+	out = make([]string, 0, k.s.Len())
+	k.ForEach(func(str string) (end bool) {
+		out = append(out, str)
+		return
+	})
+
+	return
+}
