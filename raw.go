@@ -1,34 +1,20 @@
 package bst
 
-import (
-	"sort"
-)
-
 // NewRaw a new Raw instance
 func NewRaw[K, V any](compare func(K, K) int, kvs ...KV[K, V]) *Raw[K, V] {
-	s := makeRaw[K, V](compare, kvs)
+	s := makeRaw[K, V](compare, &sliceBackend[K, V]{})
 	return &s
 }
 
-func makeRaw[K, V any](compare func(K, K) int, kvs []KV[K, V]) (s Raw[K, V]) {
-	sz := len(kvs)
-	if sz == 0 {
-		sz = 8
-	}
-
+func makeRaw[K, V any](compare func(K, K) int, b Backend[K, V]) (s Raw[K, V]) {
 	s.compare = compare
-	s.kvs = make([]KV[K, V], len(kvs), sz)
-	copy(s.kvs, kvs)
-	sort.Slice(s.kvs, func(i, j int) (less bool) {
-		return s.compare(s.kvs[i].Key, s.kvs[j].Key) == -1
-	})
-
+	s.b = b
 	return
 }
 
 // Raw is a Raw Stringset
 type Raw[K, V any] struct {
-	kvs     []KV[K, V]
+	b       Backend[K, V]
 	compare func(K, K) int
 }
 
@@ -36,14 +22,12 @@ type Raw[K, V any] struct {
 func (s *Raw[K, V]) Set(key K, value V) {
 	index, match := s.getIndex(key)
 	if match {
-		s.kvs[index].Value = value
+		s.b.Set(index, value)
 		return
 	}
 
 	pair := makeKV(key, value)
-	first := s.kvs[:index]
-	second := append([]KV[K, V]{pair}, s.kvs[index:]...)
-	s.kvs = append(first, second...)
+	s.b.InsertAt(index, pair)
 }
 
 // Set will place a key
@@ -53,7 +37,7 @@ func (s *Raw[K, V]) Update(key K, fn func(V) V) (success bool) {
 		return false
 	}
 
-	s.kvs[index].Value = fn(s.kvs[index].Value)
+	s.b.Set(index, fn(s.b.Get(index).Value))
 	return true
 }
 
@@ -64,7 +48,7 @@ func (s *Raw[K, V]) Get(key K) (value V, has bool) {
 		return
 	}
 
-	value = s.kvs[index].Value
+	value = s.b.Get(index).Value
 	return
 }
 
@@ -75,9 +59,7 @@ func (s *Raw[K, V]) Unset(key K) {
 		return
 	}
 
-	first := s.kvs[:index]
-	second := s.kvs[index+1:]
-	s.kvs = append(first, second...)
+	s.b.Unset(index)
 }
 
 // Has will return if a key exists
@@ -88,29 +70,21 @@ func (s *Raw[K, V]) Has(key K) (has bool) {
 
 // Len will return the keys length
 func (s *Raw[K, V]) Len() (n int) {
-	return len(s.kvs)
+	return s.b.Len()
 }
 
 // Len will return the keys length
 func (s *Raw[K, V]) Slice() (kvs []KV[K, V]) {
-	kvs = make([]KV[K, V], len(s.kvs))
-	copy(kvs, s.kvs)
-	return
+	return s.b.Slice()
 }
 
 // Len will return the keys length
 func (s *Raw[K, V]) ForEach(fn func(K, V) (end bool)) (ended bool) {
-	for _, kv := range s.kvs {
-		if ended = fn(kv.Key, kv.Value); ended {
-			return
-		}
-	}
-
-	return
+	return s.b.ForEach(fn)
 }
 
 func (s *Raw[K, V]) getKey(index int) K {
-	return s.kvs[index].Key
+	return s.b.Get(index).Key
 }
 
 func (s *Raw[K, V]) getIndex(key K) (index int, match bool) {

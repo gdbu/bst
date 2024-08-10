@@ -8,7 +8,11 @@ func New[V any](kvs ...KV[string, V]) *Store[V] {
 
 // NewStore a new Store instance
 func makeStore[V any](kvs []KV[string, V]) (s Store[V]) {
-	s.Raw = makeRaw[string, V](compareString, kvs)
+	s.Raw = makeRaw[string, V](compareString, &sliceBackend[string, V]{})
+	for _, kv := range kvs {
+		s.Set(kv.Key, kv.Value)
+	}
+
 	return
 }
 
