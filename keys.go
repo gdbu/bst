@@ -3,7 +3,7 @@ package bst
 // NewKeys a new Keys instance
 func NewKeys(keys ...string) *Keys {
 	var k Keys
-	k.s = makeStore[struct{}](nil)
+	k.s = makeStore[struct{}](&sliceBackend[string, struct{}]{}, nil)
 	for _, key := range keys {
 		k.s.Set(key, struct{}{})
 	}
@@ -23,11 +23,11 @@ func (k *Keys) Set(key string) {
 
 // Unset removes a key
 func (k *Keys) Unset(key string) {
-	k.s.Unset(key)
+	k.s.RemoveAt(key)
 }
 
 // Has determines if a key exists
-func (k *Keys) Has(key string) bool {
+func (k *Keys) Has(key string) (has bool, err error) {
 	return k.s.Has(key)
 }
 

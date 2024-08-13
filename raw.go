@@ -1,5 +1,7 @@
 package bst
 
+import "fmt"
+
 // NewRaw a new Raw instance
 func NewRaw[K, V any](compare func(K, K) int, kvs ...KV[K, V]) *Raw[K, V] {
 	s := makeRaw[K, V](compare, &sliceBackend[K, V]{})
@@ -19,52 +21,93 @@ type Raw[K, V any] struct {
 }
 
 // Set will place a key
-func (s *Raw[K, V]) Set(key K, value V) {
-	index, match := s.getIndex(key)
-	if match {
-		s.b.Set(index, value)
+func (s *Raw[K, V]) Set(key K, value V) (err error) {
+	var (
+		index int
+		match bool
+	)
+
+	if index, match, err = s.getIndex(key); err != nil {
 		return
 	}
 
 	pair := makeKV(key, value)
-	s.b.InsertAt(index, pair)
-}
-
-// Set will place a key
-func (s *Raw[K, V]) Update(key K, fn func(V) V) (success bool) {
-	index, match := s.getIndex(key)
-	if !match {
-		return false
-	}
-
-	s.b.Set(index, fn(s.b.Get(index).Value))
-	return true
-}
-
-// Get will retrieve a value for a given key
-func (s *Raw[K, V]) Get(key K) (value V, has bool) {
-	var index int
-	if index, has = s.getIndex(key); !has {
+	if match {
+		s.b.Set(index, pair)
 		return
 	}
 
-	value = s.b.Get(index).Value
+	s.b.InsertAt(index, pair)
+	return
+}
+
+// Set will place a key
+func (s *Raw[K, V]) Update(key K, fn func(V) V) (err error) {
+	var (
+		index int
+		match bool
+	)
+
+	if index, match, err = s.getIndex(key); err != nil {
+		return
+	}
+
+	if !match {
+		err = fmt.Errorf("entry of <%v> was not found", key)
+		return
+	}
+
+	var kv KV[K, V]
+	if kv, err = s.b.Get(index); err != nil {
+		return
+	}
+
+	kv.Value = fn(kv.Value)
+	return s.b.Set(index, kv)
+}
+
+// Get will retrieve a value for a given key
+func (s *Raw[K, V]) Get(key K) (value V, err error) {
+	var (
+		index int
+		match bool
+	)
+
+	if index, match, err = s.getIndex(key); err != nil {
+		return
+	}
+
+	if !match {
+		err = fmt.Errorf("entry of <%v> was not found", key)
+		return
+	}
+
+	var kv KV[K, V]
+	if kv, err = s.b.Get(index); err != nil {
+		return
+	}
+
+	value = kv.Value
 	return
 }
 
 // UsSet will remove a key
-func (s *Raw[K, V]) Unset(key K) {
-	index, match := s.getIndex(key)
-	if !match {
+func (s *Raw[K, V]) RemoveAt(key K) (err error) {
+	var (
+		index int
+		match bool
+	)
+
+	if index, match, err = s.getIndex(key); !match {
 		return
 	}
 
-	s.b.Unset(index)
+	return s.b.RemoveAt(index)
 }
 
 // Has will return if a key exists
-func (s *Raw[K, V]) Has(key K) (has bool) {
-	_, has = s.getIndex(key)
+func (s *Raw[K, V]) Has(key K) (has bool, err error) {
+	_, has, err = s.getIndex(key)
 	return
 }
 
@@ -79,15 +122,20 @@ func (s *Raw[K, V]) Slice() (kvs []KV[K, V]) {
 }
 
 // Len will return the keys length
-func (s *Raw[K, V]) ForEach(fn func(K, V) (end bool)) (ended bool) {
+func (s *Raw[K, V]) ForEach(fn func(KV[K, V]) (end bool)) (ended bool) {
 	return s.b.ForEach(fn)
 }
 
-func (s *Raw[K, V]) getKey(index int) K {
-	return s.b.Get(index).Key
+func (s *Raw[K, V]) getKey(index int) (key K, err error) {
+	var kv KV[K, V]
+	if kv, err = s.b.Get(index); err != nil {
+		return
+	}
+
+	return kv.Key, nil
 }
 
-func (s *Raw[K, V]) getIndex(key K) (index int, match bool) {
+func (s *Raw[K, V]) getIndex(key K) (index int, match bool, err error) {
 	sz := s.Len()
 	if sz == 0 {
 		return
@@ -97,13 +145,22 @@ func (s *Raw[K, V]) getIndex(key K) (index int, match bool) {
 	end := sz - 1
 	index = sz / 2
 
-	if s.compare(s.getKey(end), key) == -1 {
+	var endKey K
+	if endKey, err = s.getKey(end); err != nil {
+		return
+	}
+
+	if s.compare(endKey, key) == -1 {
 		index = end + 1
 		return
 	}
 
 	for {
-		ref := s.getKey(index)
+		var ref K
+		if ref, err = s.getKey(index); err != nil {
+			return
+		}
+
 		compared := s.compare(key, ref)
 		switch {
 		case compared == 0:
