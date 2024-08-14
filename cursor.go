@@ -11,39 +11,22 @@ type Cursor[K any, V any] struct {
 	c mappedslice.Cursor[KV[K, V]]
 }
 
-func (c *Cursor[K, V]) Seek(k K) (v V, ok bool) {
-	index, _, err := c.r.getIndex(k)
+func (c *Cursor[K, V]) Seek(seekTo K) (kv KV[K, V], ok bool) {
+	index, _, err := c.r.getIndex(seekTo)
 	if err != nil {
-		log.Printf("error getting index for <%v>: %v", k, err)
-	}
-
-	var kv KV[K, V]
-	if kv, ok = c.c.Seek(index); !ok {
+		log.Printf("error getting index for <%v>: %v", seekTo, err)
 		return
 	}
 
-	v = kv.Value
-	return
+	return c.c.Seek(index)
 }
 
-func (c *Cursor[K, V]) Next() (v V, ok bool) {
-	var kv KV[K, V]
-	if kv, ok = c.c.Next(); !ok {
-		return
-	}
-
-	v = kv.Value
-	return
+func (c *Cursor[K, V]) Next() (kv KV[K, V], ok bool) {
+	return c.c.Next()
 }
 
-func (c *Cursor[K, V]) Prev() (v V, ok bool) {
-	var kv KV[K, V]
-	if kv, ok = c.c.Prev(); !ok {
-		return
-	}
-
-	v = kv.Value
-	return
+func (c *Cursor[K, V]) Prev() (kv KV[K, V], ok bool) {
+	return c.c.Prev()
 }
 
 func (c *Cursor[K, V]) Close() {
