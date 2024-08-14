@@ -1,6 +1,9 @@
 package bst
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 var (
 	stringSink string
@@ -20,7 +23,9 @@ func TestStore_Set(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   []KV[string, string]
+
+		want    []KV[string, string]
+		wantErr bool
 	}
 
 	tests := []testcase{
@@ -114,33 +119,19 @@ func TestStore_Set(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			k := New(tt.fields.kvs...)
-			k.Set(tt.args.key, tt.args.value)
+			err := k.Set(tt.args.key, tt.args.value)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Store.Get() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			got := k.b.Slice()
+
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Store.Set() got = %v, want %v", got, tt.want)
+			}
 		})
 	}
-}
-
-func Benchmark_Store_getIndex(b *testing.B) {
-	var kvs []KV[string, string]
-	for _, key := range testLetters {
-		var kv KV[string, string]
-		kv.Key = key
-		kv.Value = key
-		kvs = append(kvs, kv)
-	}
-
-	k := New(kvs...)
-	b.ResetTimer()
-	var match bool
-	for i := 0; i < b.N; i++ {
-		for _, key := range testLetters {
-			indexSink, match = k.getIndex(key)
-			if !match {
-				b.Fatalf("received non-match for <%s>", key)
-			}
-		}
-	}
-
-	b.ReportAllocs()
 }
 
 func Benchmark_Store_Get(b *testing.B) {
@@ -155,12 +146,12 @@ func Benchmark_Store_Get(b *testing.B) {
 	k := New(kvs...)
 	b.ResetTimer()
 
-	var match bool
 	for i := 0; i < b.N; i++ {
 		for _, key := range testLetters {
-			stringSink, match = k.Get(key)
-			if !match {
-				b.Fatalf("received non-match for <%s>", key)
+			var err error
+			stringSink, err = k.Get(key)
+			if err != nil {
+				b.Fatal(err)
 			}
 		}
 	}
@@ -182,6 +173,35 @@ func Benchmark_Map_Get(b *testing.B) {
 			stringSink, match = m[key]
 			if !match {
 				b.Fatalf("received non-match for <%s>", key)
+			}
+		}
+	}
+
+	b.ReportAllocs()
+}
+
+func Benchmark_Store_getIndex(b *testing.B) {
+	var kvs []KV[string, string]
+	for _, key := range testLetters {
+		var kv KV[string, string]
+		kv.Key = key
+		kv.Value = key
+		kvs = append(kvs, kv)
+	}
+
+	k := New(kvs...)
+	b.ResetTimer()
+	var match bool
+	for i := 0; i < b.N; i++ {
+		for _, key := range testLetters {
+			var err error
+			indexSink, match, err = k.getIndex(key)
+			if !match {
+				b.Fatalf("received non-match for <%s>", key)
+			}
+
+			if err != nil {
+				b.Fatal(err)
 			}
 		}
 	}
