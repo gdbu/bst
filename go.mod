@@ -1,8 +1,8 @@
 module github.com/gdbu/bst
 
-go 1.22.4
+go 1.23.0
 
-require github.com/itsmontoya/mappedslice v0.2.1
+require github.com/itsmontoya/mappedslice v0.4.0
 
 require (
 	github.com/edsrzf/mmap-go v1.1.0 // indirect

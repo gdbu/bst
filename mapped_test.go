@@ -1,6 +1,7 @@
 package bst
 
 import (
+	"io"
 	"os"
 	"reflect"
 	"slices"
@@ -746,6 +747,324 @@ func TestMapped_ForEach(t *testing.T) {
 			m.ForEach(func(k keytype, v int) (end bool) {
 				gotKeys = append(gotKeys, k)
 				return tt.fields.end
+			})
+
+			if !reflect.DeepEqual(gotKeys, tt.wantKeys) {
+				t.Errorf("Mapped.ForEach() (after close and re-open) gotKeys = %v, wantKeys %v", gotKeys, tt.wantKeys)
+			}
+		})
+	}
+}
+
+func TestMapped_Cursor(t *testing.T) {
+	type keytype [4]int
+	type fields struct {
+		kvs []KV[keytype, int]
+		err error
+	}
+
+	type testcase struct {
+		name   string
+		fields fields
+
+		wantKeys []keytype
+		wantErr  bool
+	}
+
+	tests := []testcase{
+		{
+			name: "single",
+			fields: fields{
+				kvs: []KV[keytype, int]{
+					{
+						Key:   keytype{0, 0, 0, 0},
+						Value: 0,
+					},
+				},
+			},
+			wantKeys: []keytype{
+				{0, 0, 0, 0},
+			},
+		},
+		{
+			name: "with error",
+			fields: fields{
+				err: io.EOF,
+				kvs: []KV[keytype, int]{
+					{
+						Key:   keytype{0, 0, 0, 0},
+						Value: 0,
+					},
+				},
+			},
+			wantKeys: []keytype{
+				{0, 0, 0, 0},
+			},
+			wantErr: true,
+		},
+		{
+			name: "multiple",
+			fields: fields{
+				kvs: []KV[keytype, int]{
+					{
+						Key:   keytype{0, 0, 0, 0},
+						Value: 0,
+					},
+					{
+						Key:   keytype{0, 0, 0, 1},
+						Value: 1,
+					},
+					{
+						Key:   keytype{0, 0, 0, 2},
+						Value: 2,
+					},
+					{
+						Key:   keytype{0, 0, 0, 3},
+						Value: 3,
+					},
+					{
+						Key:   keytype{0, 0, 0, 4},
+						Value: 4,
+					},
+					{
+						Key:   keytype{0, 0, 0, 5},
+						Value: 5,
+					},
+					{
+						Key:   keytype{0, 0, 0, 6},
+						Value: 6,
+					},
+					{
+						Key:   keytype{0, 0, 0, 7},
+						Value: 7,
+					},
+				},
+			},
+			wantKeys: []keytype{
+				{0, 0, 0, 0},
+				{0, 0, 0, 1},
+				{0, 0, 0, 2},
+				{0, 0, 0, 3},
+				{0, 0, 0, 4},
+				{0, 0, 0, 5},
+				{0, 0, 0, 6},
+				{0, 0, 0, 7},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var (
+				m   *Mapped[keytype, int]
+				err error
+			)
+
+			if m, err = NewMapped("./test.bat", func(a, b keytype) (compare int) {
+				return slices.Compare(a[:], b[:])
+			}, tt.fields.kvs...); err != nil {
+				t.Error(err)
+				return
+			}
+			defer os.Remove("./test.bat")
+
+			var gotKeys []keytype
+			err = m.Cursor(func(c *Cursor[keytype, int]) (err error) {
+				for kv, ok := c.Seek(keytype{0, 0, 0, 0}); ok; kv, ok = c.Next() {
+					gotKeys = append(gotKeys, kv.Key)
+				}
+
+				return tt.fields.err
+			})
+
+			if !reflect.DeepEqual(gotKeys, tt.wantKeys) {
+				t.Errorf("Mapped.Cursor() gotKeys = %v, wantKeys %v", gotKeys, tt.wantKeys)
+				return
+			}
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Mapped.Cursor() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if err = m.Close(); err != nil {
+				t.Error(err)
+				return
+			}
+
+			if m, err = NewMapped[keytype, int]("./test.bat", func(a, b keytype) (compare int) {
+				return slices.Compare(a[:], b[:])
+			}); err != nil {
+				t.Error(err)
+			}
+
+			gotKeys = gotKeys[:0]
+			_ = m.Cursor(func(c *Cursor[keytype, int]) (err error) {
+				for kv, ok := c.Seek(keytype{0, 0, 0, 0}); ok; kv, ok = c.Next() {
+					gotKeys = append(gotKeys, kv.Key)
+				}
+
+				return tt.fields.err
+			})
+
+			if !reflect.DeepEqual(gotKeys, tt.wantKeys) {
+				t.Errorf("Mapped.ForEach() (after close and re-open) gotKeys = %v, wantKeys %v", gotKeys, tt.wantKeys)
+			}
+		})
+	}
+}
+
+func TestMapped_Cursor_prev(t *testing.T) {
+	type keytype [4]int
+	type fields struct {
+		kvs    []KV[keytype, int]
+		seekTo keytype
+		err    error
+	}
+
+	type testcase struct {
+		name   string
+		fields fields
+
+		wantKeys []keytype
+		wantErr  bool
+	}
+
+	tests := []testcase{
+		{
+			name: "single",
+			fields: fields{
+				kvs: []KV[keytype, int]{
+					{
+						Key:   keytype{0, 0, 0, 0},
+						Value: 0,
+					},
+				},
+			},
+			wantKeys: []keytype{
+				{0, 0, 0, 0},
+			},
+		},
+		{
+			name: "with error",
+			fields: fields{
+				err: io.EOF,
+				kvs: []KV[keytype, int]{
+					{
+						Key:   keytype{0, 0, 0, 0},
+						Value: 0,
+					},
+				},
+			},
+			wantKeys: []keytype{
+				{0, 0, 0, 0},
+			},
+			wantErr: true,
+		},
+		{
+			name: "multiple",
+			fields: fields{
+				seekTo: keytype{0, 0, 0, 7},
+				kvs: []KV[keytype, int]{
+					{
+						Key:   keytype{0, 0, 0, 0},
+						Value: 0,
+					},
+					{
+						Key:   keytype{0, 0, 0, 1},
+						Value: 1,
+					},
+					{
+						Key:   keytype{0, 0, 0, 2},
+						Value: 2,
+					},
+					{
+						Key:   keytype{0, 0, 0, 3},
+						Value: 3,
+					},
+					{
+						Key:   keytype{0, 0, 0, 4},
+						Value: 4,
+					},
+					{
+						Key:   keytype{0, 0, 0, 5},
+						Value: 5,
+					},
+					{
+						Key:   keytype{0, 0, 0, 6},
+						Value: 6,
+					},
+					{
+						Key:   keytype{0, 0, 0, 7},
+						Value: 7,
+					},
+				},
+			},
+			wantKeys: []keytype{
+				{0, 0, 0, 7},
+				{0, 0, 0, 6},
+				{0, 0, 0, 5},
+				{0, 0, 0, 4},
+				{0, 0, 0, 3},
+				{0, 0, 0, 2},
+				{0, 0, 0, 1},
+				{0, 0, 0, 0},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var (
+				m   *Mapped[keytype, int]
+				err error
+			)
+
+			if m, err = NewMapped("./test.bat", func(a, b keytype) (compare int) {
+				return slices.Compare(a[:], b[:])
+			}, tt.fields.kvs...); err != nil {
+				t.Error(err)
+				return
+			}
+			defer os.Remove("./test.bat")
+
+			var gotKeys []keytype
+			err = m.Cursor(func(c *Cursor[keytype, int]) (err error) {
+				for kv, ok := c.Seek(tt.fields.seekTo); ok; kv, ok = c.Prev() {
+					gotKeys = append(gotKeys, kv.Key)
+				}
+
+				return tt.fields.err
+			})
+
+			if !reflect.DeepEqual(gotKeys, tt.wantKeys) {
+				t.Errorf("Mapped.Cursor() gotKeys = %v, wantKeys %v", gotKeys, tt.wantKeys)
+				return
+			}
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Mapped.Cursor() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if err = m.Close(); err != nil {
+				t.Error(err)
+				return
+			}
+
+			if m, err = NewMapped[keytype, int]("./test.bat", func(a, b keytype) (compare int) {
+				return slices.Compare(a[:], b[:])
+			}); err != nil {
+				t.Error(err)
+			}
+
+			gotKeys = gotKeys[:0]
+			_ = m.Cursor(func(c *Cursor[keytype, int]) (err error) {
+				for kv, ok := c.Seek(tt.fields.seekTo); ok; kv, ok = c.Prev() {
+					gotKeys = append(gotKeys, kv.Key)
+				}
+
+				return tt.fields.err
 			})
 
 			if !reflect.DeepEqual(gotKeys, tt.wantKeys) {

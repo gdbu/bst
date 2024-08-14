@@ -37,13 +37,14 @@ func (s *Raw[K, V]) Set(key K, value V) (err error) {
 	}
 
 	pair := makeKV(key, value)
-	if match {
-		s.b.Set(index, pair)
-		return
+	switch {
+	case match:
+		return s.b.Set(index, pair)
+	case index == s.Len():
+		return s.b.Append(pair)
+	default:
+		return s.b.InsertAt(index, pair)
 	}
-
-	s.b.InsertAt(index, pair)
-	return
 }
 
 // Update will pass the existing value to the provided function and update the entry value with whatever is returned
@@ -121,16 +122,26 @@ func (s *Raw[K, V]) Len() (n int) {
 	return s.b.Len()
 }
 
-// Len will return the keys length
+// Slice will return a slice with the copied contents
 func (s *Raw[K, V]) Slice() (kvs []KV[K, V]) {
 	return s.b.Slice()
 }
 
-// Len will return the keys length
+// ForEach will iterate over all values
 func (s *Raw[K, V]) ForEach(fn func(K, V) (end bool)) (ended bool) {
 	return s.b.ForEach(func(kv KV[K, V]) (end bool) {
 		return fn(kv.Key, kv.Value)
 	})
+}
+
+// ForEach will iterate over all values
+func (s *Raw[K, V]) Cursor(fn func(c *Cursor[K, V]) error) (err error) {
+	var c Cursor[K, V]
+	c.c = s.b.Cursor()
+	c.r = s
+	err = fn(&c)
+	c.Close()
+	return
 }
 
 func (s *Raw[K, V]) getKey(index int) (key K, err error) {

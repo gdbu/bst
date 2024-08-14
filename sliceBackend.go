@@ -1,5 +1,7 @@
 package bst
 
+import "github.com/itsmontoya/mappedslice"
+
 var _ Backend[int, int] = &sliceBackend[int, int]{}
 
 type sliceBackend[K, V any] []KV[K, V]
@@ -13,6 +15,13 @@ func (s *sliceBackend[K, V]) Get(index int) (kv KV[K, V], err error) {
 func (s *sliceBackend[K, V]) Set(index int, kv KV[K, V]) (err error) {
 	ref := *s
 	ref[index].Value = kv.Value
+	return
+}
+
+func (s *sliceBackend[K, V]) Append(kv KV[K, V]) (err error) {
+	ref := *s
+	ref = append(ref, kv)
+	*s = ref
 	return
 }
 
@@ -54,4 +63,50 @@ func (s *sliceBackend[K, V]) ForEach(fn func(KV[K, V]) (end bool)) (ended bool) 
 	}
 
 	return
+}
+
+func (s *sliceBackend[K, V]) Cursor() mappedslice.Cursor[KV[K, V]] {
+	var c sliceCursor[K, V]
+	c.s = *s
+	return &c
+}
+
+type sliceCursor[K, V any] struct {
+	index int
+	s     sliceBackend[K, V]
+}
+
+func (c *sliceCursor[K, V]) Seek(index int) (kv KV[K, V], ok bool) {
+	c.index = index
+	if index < 0 || index >= len(c.s) {
+		return
+	}
+
+	kv = c.s[index]
+	return
+}
+
+func (c *sliceCursor[K, V]) Next() (next KV[K, V], ok bool) {
+	c.index++
+	if c.index < 0 || c.index >= len(c.s) {
+		return
+	}
+
+	next = c.s[c.index]
+	return
+}
+
+func (c *sliceCursor[K, V]) Prev() (prev KV[K, V], ok bool) {
+	c.index--
+	if c.index < 0 || c.index >= len(c.s) {
+		return
+	}
+
+	prev = c.s[c.index]
+	return
+}
+
+func (c *sliceCursor[K, V]) Close() error {
+	c.s = nil
+	return nil
 }
