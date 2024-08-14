@@ -6,18 +6,9 @@ func New[V any](kvs ...KV[string, V]) *Store[V] {
 	return &s
 }
 
-func NewWithBackend[V any](b Backend[string, V], kvs ...KV[string, V]) *Store[V] {
-	s := makeStore[V](b, kvs)
-	return &s
-}
-
 // NewStore a new Store instance
 func makeStore[V any](b Backend[string, V], kvs []KV[string, V]) (s Store[V]) {
-	s.Raw = makeRaw[string, V](compareString, b)
-	for _, kv := range kvs {
-		s.Set(kv.Key, kv.Value)
-	}
-
+	s.Raw = makeRaw[string, V](compareString, b, kvs)
 	return
 }
 
