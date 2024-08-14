@@ -1,7 +1,6 @@
 package bst
 
 import (
-	"fmt"
 	"os"
 	"reflect"
 	"slices"
@@ -131,7 +130,6 @@ func TestMapped_Set_(t *testing.T) {
 			}
 			defer os.Remove("./test.bat")
 
-			fmt.Println("beep", m.b.Len())
 			err = m.Set(tt.args.key, tt.args.value)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Mapped.Get() error = %v, wantErr %v", err, tt.wantErr)
