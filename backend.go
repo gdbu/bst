@@ -7,5 +7,6 @@ type Backend[K, V any] interface {
 	RemoveAt(int) error
 	Len() int
 	Slice() []KV[K, V]
-	ForEach(fn func(KV[K, V]) (end bool)) (ended bool)
+	ForEach(func(KV[K, V]) (end bool)) (ended bool)
+	Cursor() BackendCursor[KV[K, V]]
 }
