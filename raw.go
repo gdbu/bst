@@ -37,13 +37,14 @@ func (s *Raw[K, V]) Set(key K, value V) (err error) {
 	}
 
 	pair := makeKV(key, value)
-	if match {
-		s.b.Set(index, pair)
-		return
+	switch {
+	case match:
+		return s.b.Set(index, pair)
+	case index == s.Len():
+		return s.b.Append(pair)
+	default:
+		return s.b.InsertAt(index, pair)
 	}
-
-	s.b.InsertAt(index, pair)
-	return
 }
 
 // Update will pass the existing value to the provided function and update the entry value with whatever is returned
