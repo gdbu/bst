@@ -1,10 +1,14 @@
 package bst
 
-import "log"
+import (
+	"log"
+
+	"github.com/itsmontoya/mappedslice"
+)
 
 type Cursor[K any, V any] struct {
 	r *Raw[K, V]
-	c BackendCursor[KV[K, V]]
+	c mappedslice.Cursor[KV[K, V]]
 }
 
 func (c *Cursor[K, V]) Seek(k K) (v V, ok bool) {
