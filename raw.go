@@ -121,16 +121,26 @@ func (s *Raw[K, V]) Len() (n int) {
 	return s.b.Len()
 }
 
-// Len will return the keys length
+// Slice will return a slice with the copied contents
 func (s *Raw[K, V]) Slice() (kvs []KV[K, V]) {
 	return s.b.Slice()
 }
 
-// Len will return the keys length
+// ForEach will iterate over all values
 func (s *Raw[K, V]) ForEach(fn func(K, V) (end bool)) (ended bool) {
 	return s.b.ForEach(func(kv KV[K, V]) (end bool) {
 		return fn(kv.Key, kv.Value)
 	})
+}
+
+// ForEach will iterate over all values
+func (s *Raw[K, V]) Cursor(fn func(c *Cursor[K, V]) error) (err error) {
+	var c Cursor[K, V]
+	c.c = s.b.Cursor()
+	c.r = s
+	err = fn(&c)
+	c.Close()
+	return
 }
 
 func (s *Raw[K, V]) getKey(index int) (key K, err error) {
