@@ -1,5 +1,7 @@
 package bst
 
+import "github.com/itsmontoya/mappedslice"
+
 type Backend[K, V any] interface {
 	Get(index int) (KV[K, V], error)
 	Set(int, KV[K, V]) error
@@ -8,5 +10,5 @@ type Backend[K, V any] interface {
 	Len() int
 	Slice() []KV[K, V]
 	ForEach(func(KV[K, V]) (end bool)) (ended bool)
-	Cursor() BackendCursor[KV[K, V]]
+	Cursor() mappedslice.Cursor[KV[K, V]]
 }
