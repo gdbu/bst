@@ -4,13 +4,24 @@ import "fmt"
 
 // NewRaw a new Raw instance
 func NewRaw[K, V any](compare func(K, K) int, kvs ...KV[K, V]) *Raw[K, V] {
-	s := makeRaw[K, V](compare, &sliceBackend[K, V]{})
+	s := makeRaw(compare, &sliceBackend[K, V]{}, kvs)
 	return &s
 }
 
-func makeRaw[K, V any](compare func(K, K) int, b Backend[K, V]) (s Raw[K, V]) {
+// NewRawWithBackend a new Raw instance
+func NewRawWithBackend[K, V any](compare func(K, K) int, b Backend[K, V], kvs ...KV[K, V]) *Raw[K, V] {
+	s := makeRaw(compare, &sliceBackend[K, V]{}, kvs)
+	return &s
+}
+
+func makeRaw[K, V any](compare func(K, K) int, b Backend[K, V], kvs []KV[K, V]) (s Raw[K, V]) {
 	s.compare = compare
 	s.b = b
+
+	for _, kv := range kvs {
+		s.Set(kv.Key, kv.Value)
+	}
+
 	return
 }
 
