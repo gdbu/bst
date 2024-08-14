@@ -2,14 +2,8 @@ package bst
 
 import "fmt"
 
-// NewRaw a new Raw instance
-func NewRaw[K, V any](compare func(K, K) int, kvs ...KV[K, V]) *Raw[K, V] {
-	s := makeRaw(compare, &sliceBackend[K, V]{}, kvs)
-	return &s
-}
-
-// NewRawWithBackend a new Raw instance
-func NewRawWithBackend[K, V any](compare func(K, K) int, b Backend[K, V], kvs ...KV[K, V]) *Raw[K, V] {
+// NewRaw creates a new Raw instance
+func NewRaw[K, V any](compare func(K, K) int, b Backend[K, V], kvs ...KV[K, V]) *Raw[K, V] {
 	s := makeRaw(compare, &sliceBackend[K, V]{}, kvs)
 	return &s
 }
@@ -52,8 +46,8 @@ func (s *Raw[K, V]) Set(key K, value V) (err error) {
 	return
 }
 
-// Set will place a key
-func (s *Raw[K, V]) Update(key K, fn func(V) V) (err error) {
+// Update will pass the existing value to the provided function and update the entry value with whatever is returned
+func (s *Raw[K, V]) Update(key K, fn func(existing V) V) (err error) {
 	var (
 		index int
 		match bool
@@ -133,8 +127,10 @@ func (s *Raw[K, V]) Slice() (kvs []KV[K, V]) {
 }
 
 // Len will return the keys length
-func (s *Raw[K, V]) ForEach(fn func(KV[K, V]) (end bool)) (ended bool) {
-	return s.b.ForEach(fn)
+func (s *Raw[K, V]) ForEach(fn func(K, V) (end bool)) (ended bool) {
+	return s.b.ForEach(func(kv KV[K, V]) (end bool) {
+		return fn(kv.Key, kv.Value)
+	})
 }
 
 func (s *Raw[K, V]) getKey(index int) (key K, err error) {

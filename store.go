@@ -18,9 +18,7 @@ type Store[V any] struct {
 
 // Len will return the keys length
 func (s *Store[V]) ForEach(fn func(string, V) (end bool)) (ended bool) {
-	return s.Raw.ForEach(func(kv KV[string, V]) (end bool) {
-		return fn(kv.Key, kv.Value)
-	})
+	return s.Raw.ForEach(fn)
 }
 
 func compareString(a, b string) int {
