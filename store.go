@@ -2,13 +2,13 @@ package bst
 
 // New a new Store instance
 func New[V any](kvs ...KV[string, V]) *Store[V] {
-	s := makeStore[V](kvs)
+	s := makeStore[V](&sliceBackend[string, V]{}, kvs)
 	return &s
 }
 
 // NewStore a new Store instance
-func makeStore[V any](kvs []KV[string, V]) (s Store[V]) {
-	s.Raw = makeRaw[string, V](compareString, kvs)
+func makeStore[V any](b Backend[string, V], kvs []KV[string, V]) (s Store[V]) {
+	s.Raw = makeRaw[string, V](compareString, b, kvs)
 	return
 }
 

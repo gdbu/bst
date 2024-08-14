@@ -1,119 +1,148 @@
 package bst
 
-import (
-	"sort"
-)
+import "fmt"
 
-// NewRaw a new Raw instance
-func NewRaw[K, V any](compare func(K, K) int, kvs ...KV[K, V]) *Raw[K, V] {
-	s := makeRaw[K, V](compare, kvs)
+// NewRaw creates a new Raw instance
+func NewRaw[K, V any](compare func(K, K) int, b Backend[K, V], kvs ...KV[K, V]) *Raw[K, V] {
+	s := makeRaw(compare, &sliceBackend[K, V]{}, kvs)
 	return &s
 }
 
-func makeRaw[K, V any](compare func(K, K) int, kvs []KV[K, V]) (s Raw[K, V]) {
-	sz := len(kvs)
-	if sz == 0 {
-		sz = 8
-	}
-
+func makeRaw[K, V any](compare func(K, K) int, b Backend[K, V], kvs []KV[K, V]) (s Raw[K, V]) {
 	s.compare = compare
-	s.kvs = make([]KV[K, V], len(kvs), sz)
-	copy(s.kvs, kvs)
-	sort.Slice(s.kvs, func(i, j int) (less bool) {
-		return s.compare(s.kvs[i].Key, s.kvs[j].Key) == -1
-	})
+	s.b = b
+
+	for _, kv := range kvs {
+		s.Set(kv.Key, kv.Value)
+	}
 
 	return
 }
 
 // Raw is a Raw Stringset
 type Raw[K, V any] struct {
-	kvs     []KV[K, V]
+	b       Backend[K, V]
 	compare func(K, K) int
 }
 
 // Set will place a key
-func (s *Raw[K, V]) Set(key K, value V) {
-	index, match := s.getIndex(key)
-	if match {
-		s.kvs[index].Value = value
+func (s *Raw[K, V]) Set(key K, value V) (err error) {
+	var (
+		index int
+		match bool
+	)
+
+	if index, match, err = s.getIndex(key); err != nil {
 		return
 	}
 
 	pair := makeKV(key, value)
-	first := s.kvs[:index]
-	second := append([]KV[K, V]{pair}, s.kvs[index:]...)
-	s.kvs = append(first, second...)
-}
-
-// Set will place a key
-func (s *Raw[K, V]) Update(key K, fn func(V) V) (success bool) {
-	index, match := s.getIndex(key)
-	if !match {
-		return false
-	}
-
-	s.kvs[index].Value = fn(s.kvs[index].Value)
-	return true
-}
-
-// Get will retrieve a value for a given key
-func (s *Raw[K, V]) Get(key K) (value V, has bool) {
-	var index int
-	if index, has = s.getIndex(key); !has {
+	if match {
+		s.b.Set(index, pair)
 		return
 	}
 
-	value = s.kvs[index].Value
+	s.b.InsertAt(index, pair)
+	return
+}
+
+// Update will pass the existing value to the provided function and update the entry value with whatever is returned
+func (s *Raw[K, V]) Update(key K, fn func(existing V) V) (err error) {
+	var (
+		index int
+		match bool
+	)
+
+	if index, match, err = s.getIndex(key); err != nil {
+		return
+	}
+
+	if !match {
+		err = fmt.Errorf("entry of <%v> was not found", key)
+		return
+	}
+
+	var kv KV[K, V]
+	if kv, err = s.b.Get(index); err != nil {
+		return
+	}
+
+	kv.Value = fn(kv.Value)
+	return s.b.Set(index, kv)
+}
+
+// Get will retrieve a value for a given key
+func (s *Raw[K, V]) Get(key K) (value V, err error) {
+	var (
+		index int
+		match bool
+	)
+
+	if index, match, err = s.getIndex(key); err != nil {
+		return
+	}
+
+	if !match {
+		err = fmt.Errorf("entry of <%v> was not found", key)
+		return
+	}
+
+	var kv KV[K, V]
+	if kv, err = s.b.Get(index); err != nil {
+		return
+	}
+
+	value = kv.Value
 	return
 }
 
 // UsSet will remove a key
-func (s *Raw[K, V]) Unset(key K) {
-	index, match := s.getIndex(key)
-	if !match {
+func (s *Raw[K, V]) RemoveAt(key K) (err error) {
+	var (
+		index int
+		match bool
+	)
+
+	if index, match, err = s.getIndex(key); !match {
 		return
 	}
 
-	first := s.kvs[:index]
-	second := s.kvs[index+1:]
-	s.kvs = append(first, second...)
+	return s.b.RemoveAt(index)
 }
 
 // Has will return if a key exists
-func (s *Raw[K, V]) Has(key K) (has bool) {
-	_, has = s.getIndex(key)
+func (s *Raw[K, V]) Has(key K) (has bool, err error) {
+	_, has, err = s.getIndex(key)
 	return
 }
 
 // Len will return the keys length
 func (s *Raw[K, V]) Len() (n int) {
-	return len(s.kvs)
+	return s.b.Len()
 }
 
 // Len will return the keys length
 func (s *Raw[K, V]) Slice() (kvs []KV[K, V]) {
-	kvs = make([]KV[K, V], len(s.kvs))
-	copy(kvs, s.kvs)
-	return
+	return s.b.Slice()
 }
 
 // Len will return the keys length
 func (s *Raw[K, V]) ForEach(fn func(K, V) (end bool)) (ended bool) {
-	for _, kv := range s.kvs {
-		if ended = fn(kv.Key, kv.Value); ended {
-			return
-		}
+	return s.b.ForEach(func(kv KV[K, V]) (end bool) {
+		return fn(kv.Key, kv.Value)
+	})
+}
+
+func (s *Raw[K, V]) getKey(index int) (key K, err error) {
+	var kv KV[K, V]
+	if kv, err = s.b.Get(index); err != nil {
+		return
 	}
 
-	return
+	return kv.Key, nil
 }
 
-func (s *Raw[K, V]) getKey(index int) K {
-	return s.kvs[index].Key
-}
-
-func (s *Raw[K, V]) getIndex(key K) (index int, match bool) {
+func (s *Raw[K, V]) getIndex(key K) (index int, match bool, err error) {
 	sz := s.Len()
 	if sz == 0 {
 		return
@@ -123,13 +152,22 @@ func (s *Raw[K, V]) getIndex(key K) (index int, match bool) {
 	end := sz - 1
 	index = sz / 2
 
-	if s.compare(s.getKey(end), key) == -1 {
+	var endKey K
+	if endKey, err = s.getKey(end); err != nil {
+		return
+	}
+
+	if s.compare(endKey, key) == -1 {
 		index = end + 1
 		return
 	}
 
 	for {
-		ref := s.getKey(index)
+		var ref K
+		if ref, err = s.getKey(index); err != nil {
+			return
+		}
+
 		compared := s.compare(key, ref)
 		switch {
 		case compared == 0:

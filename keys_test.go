@@ -47,15 +47,23 @@ func TestKeys(t *testing.T) {
 
 	for _, tc := range tcs {
 		k := NewKeys(tc.strs...)
-		has := k.Has(tc.key)
+		has, err := k.Has(tc.key)
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		if tc.wantMatch != has {
 			t.Fatalf("invalid match, expected %v and received %v", tc.wantMatch, has)
 		}
 
 		if !has {
 			k.Set("foo")
+			has, err := k.Has("foo")
+			if err != nil {
+				t.Fatal(err)
+			}
 
-			if !k.Has("foo") {
+			if !has {
 				t.Fatal("does not have foo when expected")
 			}
 
@@ -63,7 +71,12 @@ func TestKeys(t *testing.T) {
 
 		}
 
-		if k.Has("foo") {
+		has, err = k.Has("foo")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if has {
 			t.Fatal("has foo when not expected")
 		}
 	}
