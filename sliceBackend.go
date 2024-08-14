@@ -1,5 +1,7 @@
 package bst
 
+import "github.com/itsmontoya/mappedslice"
+
 var _ Backend[int, int] = &sliceBackend[int, int]{}
 
 type sliceBackend[K, V any] []KV[K, V]
@@ -56,7 +58,7 @@ func (s *sliceBackend[K, V]) ForEach(fn func(KV[K, V]) (end bool)) (ended bool) 
 	return
 }
 
-func (s *sliceBackend[K, V]) Cursor() BackendCursor[KV[K, V]] {
+func (s *sliceBackend[K, V]) Cursor() mappedslice.Cursor[KV[K, V]] {
 	var c sliceCursor[K, V]
 	c.s = *s
 	return &c
@@ -97,6 +99,7 @@ func (c *sliceCursor[K, V]) Prev() (prev KV[K, V], ok bool) {
 	return
 }
 
-func (c *sliceCursor[K, V]) Close() {
+func (c *sliceCursor[K, V]) Close() error {
 	c.s = nil
+	return nil
 }
