@@ -18,6 +18,13 @@ func (s *sliceBackend[K, V]) Set(index int, kv KV[K, V]) (err error) {
 	return
 }
 
+func (s *sliceBackend[K, V]) Append(kv KV[K, V]) (err error) {
+	ref := *s
+	ref = append(ref, kv)
+	*s = ref
+	return
+}
+
 func (s *sliceBackend[K, V]) InsertAt(index int, pair KV[K, V]) (err error) {
 	ref := *s
 	first := ref[:index]
