@@ -193,8 +193,16 @@ func (s *Raw[K, V]) getIndex(key K) (index int, match bool, err error) {
 			return
 
 		case compared == -1:
+			if index == start {
+				return
+			}
+
 			end = index - 1
 		case compared == 1:
+			if index == end {
+				return
+			}
+
 			start = index + 1
 		}
 
