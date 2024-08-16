@@ -1,7 +1,5 @@
 package bst
 
-import "fmt"
-
 // NewRaw creates a new Raw instance
 func NewRaw[K, V any](compare func(K, K) int, b Backend[K, V], kvs ...KV[K, V]) *Raw[K, V] {
 	s := makeRaw(compare, &sliceBackend[K, V]{}, kvs)
@@ -59,8 +57,7 @@ func (s *Raw[K, V]) Update(key K, fn func(existing V) V) (err error) {
 	}
 
 	if !match {
-		err = fmt.Errorf("entry of <%v> was not found", key)
-		return
+		return makeErrorNotFound(key)
 	}
 
 	var kv KV[K, V]
@@ -84,7 +81,7 @@ func (s *Raw[K, V]) Get(key K) (value V, err error) {
 	}
 
 	if !match {
-		err = fmt.Errorf("entry of <%v> was not found", key)
+		err = makeErrorNotFound(key)
 		return
 	}
 
