@@ -35,14 +35,30 @@ func (s *Raw[K, V]) Set(key K, value V) (err error) {
 	}
 
 	pair := makeKV(key, value)
-	switch {
-	case match:
+	if match {
 		return s.b.Set(index, pair)
-	case index == s.Len():
-		return s.b.Append(pair)
-	default:
-		return s.b.InsertAt(index, pair)
 	}
+
+	return s.insert(index, pair)
+}
+
+// SetNX will place a key if it does not already exist
+func (s *Raw[K, V]) SetNX(key K, value V) (err error) {
+	var (
+		index int
+		match bool
+	)
+
+	if index, match, err = s.getIndex(key); err != nil {
+		return
+	}
+
+	if match {
+		return
+	}
+
+	pair := makeKV(key, value)
+	return s.insert(index, pair)
 }
 
 // Update will pass the existing value to the provided function and update the entry value with whatever is returned
@@ -205,4 +221,12 @@ func (s *Raw[K, V]) getIndex(key K) (index int, match bool, err error) {
 
 		index = (start + end) / 2
 	}
+}
+
+func (s *Raw[K, V]) insert(index int, pair KV[K, V]) (err error) {
+	if index == s.Len() {
+		return s.b.Append(pair)
+	}
+
+	return s.b.InsertAt(index, pair)
 }
