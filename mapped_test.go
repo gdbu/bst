@@ -123,7 +123,7 @@ func TestMapped_Set(t *testing.T) {
 				err error
 			)
 
-			if m, err = NewMapped("./test.bat", func(a, b keytype) (compare int) {
+			if m, err = NewMapped("./test.bat", 32, func(a, b keytype) (compare int) {
 				return slices.Compare(a[:], b[:])
 			}, tt.fields.kvs...); err != nil {
 				t.Error(err)
@@ -146,7 +146,7 @@ func TestMapped_Set(t *testing.T) {
 				t.Error(err)
 			}
 
-			if m, err = NewMapped[keytype, int]("./test.bat", func(a, b keytype) (compare int) {
+			if m, err = NewMapped[keytype, int]("./test.bat", 32, func(a, b keytype) (compare int) {
 				return slices.Compare(a[:], b[:])
 			}); err != nil {
 				t.Error(err)
@@ -245,7 +245,7 @@ func TestMapped_Update(t *testing.T) {
 				err error
 			)
 
-			if m, err = NewMapped("./test.bat", func(a, b keytype) (compare int) {
+			if m, err = NewMapped("./test.bat", 32, func(a, b keytype) (compare int) {
 				return slices.Compare(a[:], b[:])
 			}, tt.fields.kvs...); err != nil {
 				t.Error(err)
@@ -277,7 +277,7 @@ func TestMapped_Update(t *testing.T) {
 				t.Error(err)
 			}
 
-			if m, err = NewMapped[keytype, int]("./test.bat", func(a, b keytype) (compare int) {
+			if m, err = NewMapped[keytype, int]("./test.bat", 32, func(a, b keytype) (compare int) {
 				return slices.Compare(a[:], b[:])
 			}); err != nil {
 				t.Error(err)
@@ -405,7 +405,7 @@ func TestMapped_Get(t *testing.T) {
 				err error
 			)
 
-			if m, err = NewMapped("./test.bat", func(a, b keytype) (compare int) {
+			if m, err = NewMapped("./test.bat", 32, func(a, b keytype) (compare int) {
 				return slices.Compare(a[:], b[:])
 			}, tt.fields.kvs...); err != nil {
 				t.Error(err)
@@ -428,7 +428,7 @@ func TestMapped_Get(t *testing.T) {
 				t.Error(err)
 			}
 
-			if m, err = NewMapped[keytype, int]("./test.bat", func(a, b keytype) (compare int) {
+			if m, err = NewMapped[keytype, int]("./test.bat", 32, func(a, b keytype) (compare int) {
 				return slices.Compare(a[:], b[:])
 			}); err != nil {
 				t.Error(err)
@@ -539,7 +539,7 @@ func TestMapped_RemoveAt(t *testing.T) {
 				err error
 			)
 
-			if m, err = NewMapped("./test.bat", func(a, b keytype) (compare int) {
+			if m, err = NewMapped("./test.bat", 32, func(a, b keytype) (compare int) {
 				return slices.Compare(a[:], b[:])
 			}, tt.fields.kvs...); err != nil {
 				t.Error(err)
@@ -562,7 +562,7 @@ func TestMapped_RemoveAt(t *testing.T) {
 				t.Error(err)
 			}
 
-			if m, err = NewMapped[keytype, int]("./test.bat", func(a, b keytype) (compare int) {
+			if m, err = NewMapped[keytype, int]("./test.bat", 32, func(a, b keytype) (compare int) {
 				return slices.Compare(a[:], b[:])
 			}); err != nil {
 				t.Error(err)
@@ -708,7 +708,7 @@ func TestMapped_ForEach(t *testing.T) {
 				err error
 			)
 
-			if m, err = NewMapped("./test.bat", func(a, b keytype) (compare int) {
+			if m, err = NewMapped("./test.bat", 32, func(a, b keytype) (compare int) {
 				return slices.Compare(a[:], b[:])
 			}, tt.fields.kvs...); err != nil {
 				t.Error(err)
@@ -737,7 +737,7 @@ func TestMapped_ForEach(t *testing.T) {
 				return
 			}
 
-			if m, err = NewMapped[keytype, int]("./test.bat", func(a, b keytype) (compare int) {
+			if m, err = NewMapped[keytype, int]("./test.bat", 32, func(a, b keytype) (compare int) {
 				return slices.Compare(a[:], b[:])
 			}); err != nil {
 				t.Error(err)
@@ -860,7 +860,7 @@ func TestMapped_Cursor(t *testing.T) {
 				err error
 			)
 
-			if m, err = NewMapped("./test.bat", func(a, b keytype) (compare int) {
+			if m, err = NewMapped("./test.bat", 32, func(a, b keytype) (compare int) {
 				return slices.Compare(a[:], b[:])
 			}, tt.fields.kvs...); err != nil {
 				t.Error(err)
@@ -892,7 +892,7 @@ func TestMapped_Cursor(t *testing.T) {
 				return
 			}
 
-			if m, err = NewMapped[keytype, int]("./test.bat", func(a, b keytype) (compare int) {
+			if m, err = NewMapped[keytype, int]("./test.bat", 32, func(a, b keytype) (compare int) {
 				return slices.Compare(a[:], b[:])
 			}); err != nil {
 				t.Error(err)
@@ -1020,7 +1020,7 @@ func TestMapped_Cursor_prev(t *testing.T) {
 				err error
 			)
 
-			if m, err = NewMapped("./test.bat", func(a, b keytype) (compare int) {
+			if m, err = NewMapped("./test.bat", 32, func(a, b keytype) (compare int) {
 				return slices.Compare(a[:], b[:])
 			}, tt.fields.kvs...); err != nil {
 				t.Error(err)
@@ -1052,7 +1052,7 @@ func TestMapped_Cursor_prev(t *testing.T) {
 				return
 			}
 
-			if m, err = NewMapped[keytype, int]("./test.bat", func(a, b keytype) (compare int) {
+			if m, err = NewMapped[keytype, int]("./test.bat", 32, func(a, b keytype) (compare int) {
 				return slices.Compare(a[:], b[:])
 			}); err != nil {
 				t.Error(err)
