@@ -1,6 +1,6 @@
 package bst
 
-func NewMemory[K any, V any](initialCapacity int64, compare func(K, K) int, kvs ...KV[K, V]) (out *Memory[K, V], err error) {
+func NewMemory[K any, V any](initialCapacity int64, compare func(K, K) int, kvs ...KV[K, V]) (out *Memory[K, V]) {
 	var m Memory[K, V]
 	m.s = make(sliceBackend[K, V], 0, initialCapacity)
 	m.Raw = makeRaw(compare, &m.s, kvs)
