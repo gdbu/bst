@@ -76,7 +76,7 @@ type sliceCursor[K, V any] struct {
 	s     sliceBackend[K, V]
 }
 
-func (c *sliceCursor[K, V]) Seek(index int) (kv KV[K, V], ok bool) {
+func (c *sliceCursor[K, V]) Seek(index int) (kv KV[K, V], err error) {
 	c.index = index
 	if index < 0 || index >= len(c.s) {
 		return
@@ -86,7 +86,7 @@ func (c *sliceCursor[K, V]) Seek(index int) (kv KV[K, V], ok bool) {
 	return
 }
 
-func (c *sliceCursor[K, V]) Next() (next KV[K, V], ok bool) {
+func (c *sliceCursor[K, V]) Next() (next KV[K, V], err error) {
 	c.index++
 	if c.index < 0 || c.index >= len(c.s) {
 		return
@@ -96,7 +96,7 @@ func (c *sliceCursor[K, V]) Next() (next KV[K, V], ok bool) {
 	return
 }
 
-func (c *sliceCursor[K, V]) Prev() (prev KV[K, V], ok bool) {
+func (c *sliceCursor[K, V]) Prev() (prev KV[K, V], err error) {
 	c.index--
 	if c.index < 0 || c.index >= len(c.s) {
 		return

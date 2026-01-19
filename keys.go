@@ -3,7 +3,7 @@ package bst
 // NewKeys a new Keys instance
 func NewKeys(keys ...string) *Keys {
 	var k Keys
-	k.s = makeStore[struct{}](&sliceBackend[string, struct{}]{}, nil)
+	k.s = makeStore(&sliceBackend[string, struct{}]{}, nil)
 	for _, key := range keys {
 		k.s.Set(key, struct{}{})
 	}
