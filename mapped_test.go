@@ -1,7 +1,6 @@
 package bst
 
 import (
-	"io"
 	"os"
 	"reflect"
 	"slices"
@@ -760,7 +759,6 @@ func TestMapped_Cursor(t *testing.T) {
 	type keytype [4]int
 	type fields struct {
 		kvs []KV[keytype, int]
-		err error
 	}
 
 	type testcase struct {
@@ -785,22 +783,6 @@ func TestMapped_Cursor(t *testing.T) {
 			wantKeys: []keytype{
 				{0, 0, 0, 0},
 			},
-		},
-		{
-			name: "with error",
-			fields: fields{
-				err: io.EOF,
-				kvs: []KV[keytype, int]{
-					{
-						Key:   keytype{0, 0, 0, 0},
-						Value: 0,
-					},
-				},
-			},
-			wantKeys: []keytype{
-				{0, 0, 0, 0},
-			},
-			wantErr: true,
 		},
 		{
 			name: "multiple",
@@ -869,12 +851,17 @@ func TestMapped_Cursor(t *testing.T) {
 			defer os.Remove("./test.bat")
 
 			var gotKeys []keytype
-			err = m.Cursor(func(c *Cursor[keytype, int]) (err error) {
-				for kv, ok := c.Seek(keytype{0, 0, 0, 0}); ok; kv, ok = c.Next() {
+			_ = m.Cursor(func(c *Cursor[keytype, int]) (err error) {
+				var (
+					kv      KV[keytype, int]
+					iterErr error
+				)
+
+				for kv, iterErr = c.Seek(keytype{0, 0, 0, 0}); iterErr == nil; kv, iterErr = c.Next() {
 					gotKeys = append(gotKeys, kv.Key)
 				}
 
-				return tt.fields.err
+				return iterErr
 			})
 
 			if !reflect.DeepEqual(gotKeys, tt.wantKeys) {
@@ -900,11 +887,15 @@ func TestMapped_Cursor(t *testing.T) {
 
 			gotKeys = gotKeys[:0]
 			_ = m.Cursor(func(c *Cursor[keytype, int]) (err error) {
-				for kv, ok := c.Seek(keytype{0, 0, 0, 0}); ok; kv, ok = c.Next() {
+				var (
+					kv      KV[keytype, int]
+					iterErr error
+				)
+				for kv, iterErr = c.Seek(keytype{0, 0, 0, 0}); iterErr == nil; kv, iterErr = c.Next() {
 					gotKeys = append(gotKeys, kv.Key)
 				}
 
-				return tt.fields.err
+				return iterErr
 			})
 
 			if !reflect.DeepEqual(gotKeys, tt.wantKeys) {
@@ -944,22 +935,6 @@ func TestMapped_Cursor_prev(t *testing.T) {
 			wantKeys: []keytype{
 				{0, 0, 0, 0},
 			},
-		},
-		{
-			name: "with error",
-			fields: fields{
-				err: io.EOF,
-				kvs: []KV[keytype, int]{
-					{
-						Key:   keytype{0, 0, 0, 0},
-						Value: 0,
-					},
-				},
-			},
-			wantKeys: []keytype{
-				{0, 0, 0, 0},
-			},
-			wantErr: true,
 		},
 		{
 			name: "multiple",
@@ -1029,12 +1004,17 @@ func TestMapped_Cursor_prev(t *testing.T) {
 			defer os.Remove("./test.bat")
 
 			var gotKeys []keytype
-			err = m.Cursor(func(c *Cursor[keytype, int]) (err error) {
-				for kv, ok := c.Seek(tt.fields.seekTo); ok; kv, ok = c.Prev() {
+			_ = m.Cursor(func(c *Cursor[keytype, int]) (err error) {
+				var (
+					kv      KV[keytype, int]
+					iterErr error
+				)
+
+				for kv, iterErr = c.Seek(tt.fields.seekTo); iterErr == nil; kv, iterErr = c.Prev() {
 					gotKeys = append(gotKeys, kv.Key)
 				}
 
-				return tt.fields.err
+				return iterErr
 			})
 
 			if !reflect.DeepEqual(gotKeys, tt.wantKeys) {
@@ -1060,11 +1040,15 @@ func TestMapped_Cursor_prev(t *testing.T) {
 
 			gotKeys = gotKeys[:0]
 			_ = m.Cursor(func(c *Cursor[keytype, int]) (err error) {
-				for kv, ok := c.Seek(tt.fields.seekTo); ok; kv, ok = c.Prev() {
+				var (
+					kv      KV[keytype, int]
+					iterErr error
+				)
+				for kv, iterErr = c.Seek(tt.fields.seekTo); iterErr == nil; kv, iterErr = c.Prev() {
 					gotKeys = append(gotKeys, kv.Key)
 				}
 
-				return tt.fields.err
+				return iterErr
 			})
 
 			if !reflect.DeepEqual(gotKeys, tt.wantKeys) {
